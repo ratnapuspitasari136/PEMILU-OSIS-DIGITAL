@@ -29,3 +29,8 @@
 .tombol-utama:hover {
   background: #1a44ad;
 }
+
+.pesan-error {
+  color: #dc2626;
+  font-weight: 600;
+}
