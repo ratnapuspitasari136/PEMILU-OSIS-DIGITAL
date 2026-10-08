@@ -1,0 +1,31 @@
+.halaman {
+  max-width: 640px;
+  margin: 64px auto;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.halaman h1 {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.subjudul {
+  color: #888;
+  margin-bottom: 24px;
+}
+
+.tombol-utama {
+  background: #2457d6;
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tombol-utama:hover {
+  background: #1a44ad;
+}
