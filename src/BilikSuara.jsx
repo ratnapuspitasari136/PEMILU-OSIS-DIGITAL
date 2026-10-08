@@ -2,14 +2,16 @@ import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import KartuKandidat from './KartuKandidat'
 
-function BilikSuara({ kodeSekolah, pemilih, daftarKandidat, onSelesai }) {
-  const [pilihan, setPilihan] = useState(null) // kandidat yang sedang dipilih
+function BilikSuara({ kodeSekolah, pemilih, organisasi, onSelesai, onKembali }) {
+  const [pilihan, setPilihan] = useState(null)
   const [pesan, setPesan] = useState('')
   const [sedangProses, setSedangProses] = useState(false)
 
+  const daftarKandidat = [...organisasi.kandidat].sort((a, b) => a.nomor_urut - b.nomor_urut)
+
   async function kirimSuara() {
     const yakin = window.confirm(
-      `Anda memilih pasangan nomor ${pilihan.nomor_urut}: ${pilihan.nama}.\n\n` +
+      `Anda memilih nomor ${pilihan.nomor_urut} (${pilihan.nama}) sebagai ${organisasi.jabatan}.\n\n` +
       `Suara tidak bisa diubah setelah dikirim. Lanjutkan?`
     )
     if (!yakin) return
@@ -17,7 +19,6 @@ function BilikSuara({ kodeSekolah, pemilih, daftarKandidat, onSelesai }) {
     setSedangProses(true)
     setPesan('')
 
-    // Panggil fungsi berikan_suara di Supabase
     const { data, error } = await supabase.rpc('berikan_suara', {
       p_kode_sekolah: kodeSekolah,
       p_nis: pemilih.nis,
@@ -38,8 +39,10 @@ function BilikSuara({ kodeSekolah, pemilih, daftarKandidat, onSelesai }) {
 
   return (
     <section>
-      <h2>Halo, {pemilih.nama} 👋</h2>
-      <p className="subjudul">Klik salah satu kartu untuk memilih, lalu tekan tombol Kirim Suara.</p>
+      <button className="tombol-teks" onClick={onKembali}>← Kembali ke menu</button>
+
+      <h2>Surat Suara: {organisasi.jabatan}</h2>
+      <p className="subjudul">Klik salah satu kartu, lalu tekan tombol Kirim Suara.</p>
 
       <div className="daftar-kandidat">
         {daftarKandidat.map((k) => (

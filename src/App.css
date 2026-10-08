@@ -149,3 +149,67 @@
   letter-spacing: 0.05em;
 }
 .kotak-form input:focus { outline: 2px solid #2457d6; border-color: transparent; }
+/* ---------- Tab Pemilih / Admin ---------- */
+.tab-peran {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: #f1f5f9;
+  border-radius: 12px;
+}
+.tab-peran button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: #64748b;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tab-peran button.aktif {
+  background: #fff;
+  color: #2457d6;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+.isi-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---------- Menu organisasi ---------- */
+.daftar-organisasi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+.kartu-organisasi {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 24px;
+  text-align: left;
+  font: inherit;
+  background: #fff;
+  color: #1d2433;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.kartu-organisasi:hover:not(:disabled) {
+  border-color: #2457d6;
+  transform: translateY(-2px);
+}
+.kartu-organisasi:disabled { cursor: not-allowed; }
+.kartu-organisasi.sudah { background: #f0fdf4; border-color: #86efac; }
+
+.nama-organisasi { font-size: 1.4rem; font-weight: 800; }
+.jabatan-organisasi { color: #666; }
+.status-organisasi { margin-top: 8px; font-size: 14px; font-weight: 600; color: #2457d6; }
+.kartu-organisasi.sudah .status-organisasi { color: #16a34a; }

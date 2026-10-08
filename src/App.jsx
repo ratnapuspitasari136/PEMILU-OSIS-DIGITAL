@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
-import KartuKandidat from './KartuKandidat'
 import FormMasuk from './FormMasuk'
+import MenuOrganisasi from './MenuOrganisasi'
 import BilikSuara from './BilikSuara'
 import './App.css'
 
@@ -10,15 +10,17 @@ const KODE_SEKOLAH = 'smpn2semanding'
 function App() {
   const [sekolah, setSekolah] = useState(null)
   const [pesanError, setPesanError] = useState('')
-  const [halaman, setHalaman] = useState('beranda') // beranda | masuk | bilik | selesai
+  const [halaman, setHalaman] = useState('login') // login | menu | bilik
   const [pemilih, setPemilih] = useState(null)
-  const [pesanSelesai, setPesanSelesai] = useState('')
+  const [organisasiAktif, setOrganisasiAktif] = useState(null)
+  const [pesanInfo, setPesanInfo] = useState('')
 
   useEffect(() => {
     async function ambilData() {
+      // Ambil sekolah → pemilu → organisasi → kandidat sekaligus
       const { data, error } = await supabase
         .from('sekolah')
-        .select('nama, pemilu ( id, judul, periode, status, kandidat ( * ) )')
+        .select('nama, pemilu ( id, judul, periode, status, organisasi ( id, nama, jabatan, urutan, kandidat ( * ) ) )')
         .eq('kode', KODE_SEKOLAH)
         .single()
 
@@ -39,87 +41,81 @@ function App() {
   }
 
   const pemilu = sekolah.pemilu[0]
-  const daftarKandidat = pemilu
-    ? [...pemilu.kandidat].sort((a, b) => a.nomor_urut - b.nomor_urut)
+  const daftarOrganisasi = pemilu
+    ? [...pemilu.organisasi].sort((a, b) => a.urutan - b.urutan)
     : []
 
-  // Dipanggil setelah NIS & token benar
+  // Setelah NIS & token benar → ke menu organisasi
   function setelahMasuk(dataPemilih) {
-    if (dataPemilih.sudah_memilih) {
-      setPesanSelesai('Anda sudah memberikan suara sebelumnya. Terima kasih!')
-      setHalaman('selesai')
-    } else if (dataPemilih.status_pemilu !== 'dibuka') {
-      setPesanSelesai('Bilik suara belum dibuka atau sudah ditutup.')
-      setHalaman('selesai')
-    } else {
-      setPemilih(dataPemilih)
-      setHalaman('bilik')
-    }
+    setPemilih(dataPemilih)
+    setPesanInfo('')
+    setHalaman('menu')
   }
 
-  // Dipanggil setelah suara berhasil terkirim
+  // Siswa memilih organisasi di menu → buka surat suaranya
+  function bukaBilik(org) {
+    setOrganisasiAktif(org)
+    setPesanInfo('')
+    setHalaman('bilik')
+  }
+
+  // Setelah suara terkirim → tandai organisasi itu ✅, kembali ke menu
   function setelahMemilih(pesan) {
-    setPemilih(null) // hapus NIS & token dari memori
-    setPesanSelesai(pesan)
-    setHalaman('selesai')
+    setPemilih({
+      ...pemilih,
+      sudah_dipilih: [...pemilih.sudah_dipilih, organisasiAktif.id],
+    })
+    setPesanInfo(`${pesan} (${organisasiAktif.jabatan})`)
+    setOrganisasiAktif(null)
+    setHalaman('menu')
   }
 
-  function kembaliKeBeranda() {
+  // Keluar → hapus NIS & token dari memori
+  function keluar() {
     setPemilih(null)
-    setPesanSelesai('')
-    setHalaman('beranda')
+    setOrganisasiAktif(null)
+    setPesanInfo('')
+    setHalaman('login')
   }
 
   return (
     <main className="halaman">
-      <h1>🗳️ PEMILU OSIS {sekolah.nama.toUpperCase()}</h1>
+      <h1>🗳️ PEMILU {sekolah.nama.toUpperCase()}</h1>
 
-      {halaman === 'beranda' && (
+      {!pemilu ? (
+        <p className="subjudul">Belum ada pemilu yang diumumkan.</p>
+      ) : (
         <>
-          <p className="subjudul">Pilih ketua OSIS secara online, jujur, dan rahasia.</p>
-          {pemilu ? (
-            <>
-              <h2>{pemilu.judul} {pemilu.periode}</h2>
-              <div className="daftar-kandidat">
-                {daftarKandidat.map((k) => (
-                  <KartuKandidat key={k.id} kandidat={k} />
-                ))}
-              </div>
-              {pemilu.status === 'dibuka' ? (
-                <button className="tombol-utama" onClick={() => setHalaman('masuk')}>
-                  Masuk untuk Memilih
-                </button>
-              ) : (
-                <p className="subjudul">Bilik suara belum dibuka.</p>
-              )}
-            </>
-          ) : (
-            <p className="subjudul">Belum ada pemilu yang diumumkan.</p>
+          <p className="subjudul">{pemilu.judul} · Periode {pemilu.periode}</p>
+
+          {halaman === 'login' && (
+            <FormMasuk kodeSekolah={KODE_SEKOLAH} onBerhasil={setelahMasuk} />
+          )}
+
+          {halaman === 'menu' && (
+            <MenuOrganisasi
+              pemilih={pemilih}
+              statusPemilu={pemilu.status}
+              daftarOrganisasi={daftarOrganisasi}
+              pesanInfo={pesanInfo}
+              onPilihOrganisasi={bukaBilik}
+              onKeluar={keluar}
+            />
+          )}
+
+          {halaman === 'bilik' && (
+            <BilikSuara
+              kodeSekolah={KODE_SEKOLAH}
+              pemilih={pemilih}
+              organisasi={organisasiAktif}
+              onSelesai={setelahMemilih}
+              onKembali={() => setHalaman('menu')}
+            />
           )}
         </>
       )}
 
-      {halaman === 'masuk' && (
-        <FormMasuk kodeSekolah={KODE_SEKOLAH} onBerhasil={setelahMasuk} onBatal={kembaliKeBeranda} />
-      )}
-
-      {halaman === 'bilik' && (
-        <BilikSuara
-          kodeSekolah={KODE_SEKOLAH}
-          pemilih={pemilih}
-          daftarKandidat={daftarKandidat}
-          onSelesai={setelahMemilih}
-        />
-      )}
-
-      {halaman === 'selesai' && (
-        <section className="kotak-form">
-          <p className="pesan-sukses">{pesanSelesai}</p>
-          <button className="tombol-utama" onClick={kembaliKeBeranda}>Kembali ke Beranda</button>
-        </section>
-      )}
-
-      <p className="catatan">Versi uji coba 0.4</p>
+      <p className="catatan">Versi uji coba 0.5</p>
     </main>
   )
 }
